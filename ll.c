@@ -73,11 +73,19 @@ unsigned int ll_unshift(LList *list, void *item) {
     return len;
 }
 
-unsigned int ll_put(LList *list, unsigned int target_index, void *item) {
+/**
+ * Returns the node at the specified index, padding with empty nodes until the
+ * index is reached.
+ *
+ * @param list a pointer to the list to insert into
+ * @param index the index at which to retrieve the node
+ * @return the retrieved node, or NULL if an error occurred
+ */
+static LLNode *ll_pgetn(LList *list, unsigned int index) {
     unsigned int current_index = 0;
-
     LLNode *current_node = list->head;
-    while (current_index <= target_index) {
+
+    while (current_index <= index) {
         // Insert a new NULL node if we ran out of existing nodes
         if (current_node == NULL) {
             const unsigned int prev_len = list->length;
@@ -85,7 +93,7 @@ unsigned int ll_put(LList *list, unsigned int target_index, void *item) {
 
             // We could not insert the new node for some reason
             if (new_len - prev_len != 1) {
-                return new_len;
+                return NULL;
             }
 
             // Tail will now be the pushed node
@@ -93,16 +101,53 @@ unsigned int ll_put(LList *list, unsigned int target_index, void *item) {
         }
 
         // If we have not reached the desired index, move on
-        if (current_index != target_index) {
+        if (current_index != index) {
             current_node = current_node->next;
         }
 
         current_index++;
     }
 
-    // Overwrite the value of whatever node is at the target index
-    current_node->item = item;
+    return current_node;
+}
 
+unsigned int ll_put(LList *list, unsigned int target_index, void *item) {
+    LLNode *node = ll_pgetn(list, target_index);
+    if (node != NULL) node->item = item;
+    return list->length;
+}
+
+unsigned int ll_insert(LList *list, unsigned int target_index, void *item) {
+    if (target_index == 0) {
+        return ll_unshift(list, item);
+    }
+
+    // We are checking against length here, not length - 1, because the
+    // insertion would be after the tail
+    if (target_index == list->length) {
+        return ll_push(list, item);
+    }
+
+    LLNode *prev_node = ll_pgetn(list, target_index - 1);
+    if (prev_node == NULL) {
+        return list->length;
+    }
+
+    LLNode *new_node = init_node(item);
+    if (new_node == NULL) {
+        return list->length;
+    }
+
+    new_node->next = prev_node->next;
+    prev_node->next = new_node;
+
+    // We have to double check tail, since we could have padded nodes, but not
+    // head since that would only change when setting index 0
+    if (prev_node == list->tail) {
+        list->tail = new_node;
+    }
+
+    list->length++;
     return list->length;
 }
 
@@ -290,3 +335,4 @@ void ll_partial_free(LList *list) {
 
     free(list);
 }
+

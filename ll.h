@@ -74,6 +74,25 @@ unsigned int ll_unshift(LList *list, void *item);
 unsigned int ll_put(LList *list, unsigned int index, void *item);
 
 /**
+ * Adds an item into a linked list so that it's index will be in the specified
+ * index.
+ *
+ * Unlike, `ll_put`, if the list has an existing item at the specifeid index, it
+ * will be pushed forward, having only it's position replaced with the inserted
+ * item, but not it's value.
+ *
+ * If the length of the list is less than the specified index, it will be
+ * resized will NULL items until the index is reached. SO DON'T GO OVER THE
+ * LENGTH OF THE LIST UNLESS YOU TRUST YOURSELF :D.
+ *
+ * @param list a pointer to the list to insert into
+ * @param index the index at which to insert into
+ * @param item the item to insert into the list
+ * @return the new length of the list
+ */
+unsigned int ll_insert(LList *list, unsigned int index, void *item);
+
+/**
  * Returns the node at a certain index within a linked list.
  *
  * @param list a pointer to the list to get the item from
